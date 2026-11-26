@@ -4,44 +4,179 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chef Dean - Smart Dinner Planner</title>
-  <script src="https://tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0284c7 100%);
+      color: #ffffff;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .food-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
+      font-size: 56px;
+      opacity: 0.35;
+    }
+    .food-bg span { position: absolute; }
+    .card {
+      width: 100%;
+      max-width: 560px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+    .badge {
+      background: #ffffff;
+      color: #1d4ed8;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+    .subtitle {
+      color: #dbeafe;
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 24px 0;
+      line-height: 1.4;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #93c5fd;
+      margin-bottom: 8px;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(30, 58, 138, 0.75);
+      border: 2px solid rgba(147, 197, 253, 0.45);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      outline: none;
+    }
+    textarea::placeholder, input::placeholder { color: rgba(219, 234, 254, 0.6); font-weight: 600; }
+    textarea:focus, input:focus { border-color: #ffffff; }
+    .btn-main {
+      width: 100%;
+      background: #ffffff;
+      color: #1d4ed8;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+    .btn-main:hover { background: #e0f2fe; transform: translateY(-1px); }
+    .btn-main:disabled { opacity: 0.7; cursor: not-allowed; }
+    .result-box { margin-top: 24px; display: none; }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .result-title { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #93c5fd; }
+    .btn-copy {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .output {
+      white-space: pre-wrap;
+      background: rgba(30, 58, 138, 0.75);
+      border: 2px solid rgba(147, 197, 253, 0.45);
+      border-radius: 16px;
+      padding: 18px;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.55;
+      color: #ffffff;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 text-white font-bold min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-x-hidden">
-  
-  <!-- Subtle Floating Food Background -->
-  <div class="fixed inset-0 pointer-events-none select-none overflow-hidden opacity-15 text-5xl sm:text-6xl z-0">
-    <span class="absolute top-8 left-8 -rotate-12">🍕</span>
-    <span class="absolute top-16 right-12 rotate-12">🥗</span>
-    <span class="absolute top-1/3 left-6 rotate-6">🍗</span>
-    <span class="absolute top-1/2 right-8 -rotate-12">🍝</span>
-    <span class="absolute bottom-24 left-12 rotate-12">🥑</span>
-    <span class="absolute bottom-12 right-14 -rotate-6">🌮</span>
-    <span class="absolute top-1/4 left-1/3 rotate-12">🧀</span>
-    <span class="absolute bottom-1/3 right-1/4 -rotate-12">🥦</span>
+<body>
+
+  <div class="food-bg">
+    <span style="top: 5%; left: 5%; transform: rotate(-12deg);">🍕</span>
+    <span style="top: 10%; right: 8%; transform: rotate(12deg);">🥗</span>
+    <span style="top: 32%; left: 4%; transform: rotate(8deg);">🍗</span>
+    <span style="top: 48%; right: 6%; transform: rotate(-15deg);">🍝</span>
+    <span style="bottom: 15%; left: 7%; transform: rotate(14deg);">🥑</span>
+    <span style="bottom: 8%; right: 9%; transform: rotate(-8deg);">🌮</span>
+    <span style="top: 18%; left: 32%; transform: rotate(10deg);">🧀</span>
+    <span style="bottom: 28%; right: 25%; transform: rotate(-12deg);">🥦</span>
+    <span style="top: 8%; left: 52%; transform: rotate(-6deg);">🍔</span>
+    <span style="bottom: 12%; left: 35%; transform: rotate(15deg);">🥩</span>
   </div>
 
-  <!-- Main App Card -->
-  <div class="max-w-xl w-full bg-blue-950/85 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-2xl border-2 border-blue-400/30 relative z-10">
-    <div class="flex items-center justify-between mb-3">
-      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-sky-300">Smart Dinner Planner</h1>
-      <span class="text-xs sm:text-sm bg-sky-400 text-blue-950 px-3 py-1 rounded-full font-extrabold shadow-md">👨‍🍳 Chef Dean</span>
+  <div class="card">
+    <div class="header">
+      <h1>Smart Dinner Planner</h1>
+      <span class="badge">👨‍🍳 Chef Dean</span>
     </div>
-    <p class="text-blue-100 text-sm sm:text-base font-semibold mb-6">Enter what's in the fridge to get 3 instant dinner recipes and a grocery list from Chef Dean.</p>
+    <p class="subtitle">Enter what's in the fridge to get 3 instant dinner recipes and a grocery list from Chef Dean.</p>
     
-    <label class="block text-sm font-extrabold uppercase tracking-wide text-sky-200 mb-1.5">Ingredients on hand</label>
-    <textarea id="ingredients" rows="3" placeholder="e.g., chicken breast, rice, broccoli, cheddar cheese..." class="w-full p-3.5 rounded-xl bg-blue-900/70 border-2 border-blue-400/30 mb-4 text-white font-bold placeholder-blue-300/60 focus:outline-none focus:border-sky-300 transition"></textarea>
+    <label>Ingredients on hand</label>
+    <textarea id="ingredients" rows="3" placeholder="e.g., chicken breast, rice, broccoli, cheddar cheese..."></textarea>
     
-    <label class="block text-sm font-extrabold uppercase tracking-wide text-sky-200 mb-1.5">Dietary notes (optional)</label>
-    <input id="diet" type="text" placeholder="e.g., high protein, healthy, under 30 mins" class="w-full p-3.5 rounded-xl bg-blue-900/70 border-2 border-blue-400/30 mb-6 text-white font-bold placeholder-blue-300/60 focus:outline-none focus:border-sky-300 transition" />
+    <label>Dietary notes (optional)</label>
+    <input id="diet" type="text" placeholder="e.g., high protein, healthy, under 30 mins" />
     
-    <button onclick="generate()" id="btn" class="w-full bg-sky-400 hover:bg-sky-300 text-blue-950 font-extrabold text-base sm:text-lg py-3.5 rounded-xl transition shadow-lg shadow-sky-400/25">Ask Chef Dean for Dinner Ideas</button>
+    <button onclick="generate()" id="btn" class="btn-main">Ask Chef Dean for Dinner Ideas</button>
     
-    <div id="resultBox" class="mt-6 hidden">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-xs font-extrabold uppercase tracking-wider text-sky-300">Chef Dean's Dinner Plan</span>
-        <button onclick="copyText()" id="copyBtn" class="text-xs bg-blue-800 hover:bg-blue-700 text-sky-200 font-extrabold px-3 py-1.5 rounded-lg border border-blue-400/30 transition">Copy Plan</button>
+    <div id="resultBox" class="result-box">
+      <div class="result-header">
+        <span class="result-title">Chef Dean's Dinner Plan</span>
+        <button onclick="copyText()" id="copyBtn" class="btn-copy">Copy Plan</button>
       </div>
-      <div id="output" class="whitespace-pre-wrap text-white font-semibold text-sm sm:text-base leading-relaxed bg-blue-900/80 p-5 rounded-2xl border-2 border-blue-400/30"></div>
+      <div id="output" class="output"></div>
     </div>
   </div>
 
@@ -60,7 +195,7 @@
 
       btn.innerText = 'Chef Dean is cooking up ideas...';
       btn.disabled = true;
-      resultBox.classList.remove('hidden');
+      resultBox.style.display = 'block';
       output.innerText = 'Chef Dean is checking your fridge and building recipes...';
 
       try {
