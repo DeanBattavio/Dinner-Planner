@@ -17,6 +17,7 @@ function callGoogle(path, method, apiKey, payload) {
       path: path,
       method: method,
       family: 4,
+      timeout: 15000,
       headers: headers
     }, function(res) {
       let data = '';
@@ -24,6 +25,11 @@ function callGoogle(path, method, apiKey, payload) {
       res.on('end', function() {
         resolve({ status: res.statusCode, text: data });
       });
+    });
+
+    req.on('timeout', function() {
+      req.destroy();
+      reject(new Error('Google AI is busy right now—please click Generate again!'));
     });
 
     req.on('error', function(err) { reject(err); });
@@ -54,12 +60,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    let genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, payload);
-
-    if (genRes.status === 503 || genRes.status === 429) {
-      genRes = await callGoogle('/v1beta/models/gemini-3.8-flash-lite:generateContent', 'POST', apiKey, payload);
-    }
-
+    const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash-lite:generateContent', 'POST', apiKey, payload);
     const data = JSON.parse(genRes.text);
 
     if (genRes.status !== 200 || data.error) {
@@ -73,6 +74,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ result: reply });
   } catch (err) {
-    return res.status(500).json({ error: 'Connection Error: ' + err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
