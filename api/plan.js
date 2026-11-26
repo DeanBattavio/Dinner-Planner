@@ -10,24 +10,34 @@ export default async function handler(req, res) {
   const prompt = `I have these ingredients: ${ingredients}. Dietary preference: ${diet || 'None'}. Give me 3 realistic dinner recipes I can make, and list any extra groceries I need to buy. Format cleanly with headings and bullet points.`;
 
   try {
-    const response = await fetch('https://googleapis.com', {
+    // 1. Automatically find an active Gemini model on your key
+    let modelPath = 'models/gemini-3.8-flash';
+    const listRes = await fetch(`https://googleapis.com{apiKey}`);
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const validModels = (listData.models || []).filter(m =>
+        m.supportedGenerationMethods &&
+        m.supportedGenerationMethods.includes('generateContent') &&
+        m.name.includes('flash') &&
+        !m.name.includes('tts') &&
+        !m.name.includes('image') &&
+        !m.name.includes('live')
+      );
+      if (validModels.length > 0) {
+        modelPath = validModels[0].name;
+      }
+    }
+
+    // 2. Generate the dinner recipes using that exact model
+    const response = await fetch(`https://googleapis.com{modelPath}:generateContent?key=${apiKey}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
-    const rawText = await response.text();
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch (e) {
-      return res.status(500).json({ error: 'Google returned non-JSON (Status ' + response.status + ')' });
-    }
+    const data = await response.json();
 
     if (!response.ok || data.error) {
       return res.status(500).json({ error: 'Google API Error: ' + (data.error?.message || response.statusText) });
