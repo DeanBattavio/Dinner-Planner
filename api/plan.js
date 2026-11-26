@@ -21,7 +21,13 @@ export default async function handler(req, res) {
       })
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch (e) {
+      return res.status(500).json({ error: 'Unexpected response from Google (Status ' + response.status + ')' });
+    }
 
     if (!response.ok || data.error) {
       return res.status(500).json({ error: 'Google API Error: ' + (data.error?.message || response.statusText) });
