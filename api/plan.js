@@ -48,13 +48,17 @@ export default async function handler(req, res) {
 
   const prompt = 'Ingredients: ' + ingredients + '. Diet: ' + diet + '. Give 3 quick, realistic dinner recipes using these ingredients (with brief steps) and a short bulleted grocery list of extra items to buy.';
 
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
+  };
+
   try {
-    const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        thinkingConfig: { thinkingBudget: 0 }
-      }
-    });
+    let genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, payload);
+
+    if (genRes.status === 503 || genRes.status === 429) {
+      genRes = await callGoogle('/v1beta/models/gemini-3.8-flash-lite:generateContent', 'POST', apiKey, payload);
+    }
 
     const data = JSON.parse(genRes.text);
 
