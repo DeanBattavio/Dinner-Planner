@@ -1,3 +1,35 @@
+import https from 'node:https';
+
+function callGoogle(path, method, apiKey, payload) {
+  return new Promise(function(resolve, reject) {
+    const bodyStr = payload ? JSON.stringify(payload) : null;
+    const headers = { 'x-goog-api-key': apiKey };
+    if (bodyStr) {
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = Buffer.byteLength(bodyStr);
+    }
+
+    const req = https.request({
+      hostname: '://googleapis.com',
+      port: 443,
+      path: path,
+      method: method,
+      family: 4,
+      headers: headers
+    }, function(res) {
+      let data = '';
+      res.on('data', function(chunk) { data += chunk; });
+      res.on('end', function() {
+        resolve({ status: res.statusCode, text: data });
+      });
+    });
+
+    req.on('error', function(err) { reject(err); });
+    if (bodyStr) req.write(bodyStr);
+    req.end();
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -16,12 +48,9 @@ export default async function handler(req, res) {
 
   try {
     let modelPath = 'models/gemini-2.5-flash';
-    const listRes = await fetch('https://googleapis.com', {
-      headers: { 'x-goog-api-key': apiKey }
-    });
-
-    if (listRes.ok) {
-      const listData = await listRes.json();
+    const listRes = await callGoogle('/v1beta/models', 'GET', apiKey, null);
+    if (listRes.status === 200) {
+      const listData = JSON.parse(listRes.text);
       const models = listData.models || [];
       const validModels = models.filter(function(m) {
         return m.supportedGenerationMethods &&
@@ -36,23 +65,14 @@ export default async function handler(req, res) {
       }
     }
 
-    const apiUrl = 'https://googleapis.com' + modelPath + ':generateContent';
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+    const genRes = await callGoogle('/v1beta/' + modelPath + ':generateContent', 'POST', apiKey, {
+      contents: [{ parts: [{ text: prompt }] }]
     });
 
-    const data = await response.json();
+    const data = JSON.parse(genRes.text);
 
-    if (!response.ok || data.error) {
-      const errMsg = (data.error && data.error.message) ? data.error.message : response.statusText;
+    if (genRes.status !== 200 || data.error) {
+      const errMsg = (data.error && data.error.message) ? data.error.message : ('Status ' + genRes.status);
       return res.status(500).json({ error: 'Google API Error: ' + errMsg });
     }
 
@@ -62,6 +82,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ result: reply });
   } catch (err) {
-    return res.status(500).json({ error: 'Error: ' + err.message });
+    return res.status(500).json({ error: 'Connection Error: ' + err.message });
   }
 }
