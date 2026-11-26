@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family AI Meal Planner</title>
+  <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-xl w-full bg-slate-800 p-8 rounded-2xl shadow-xl border border-slate-700">
+    <h1 class="text-3xl font-bold text-emerald-400 mb-2">Smart Dinner Planner</h1>
+    <p class="text-slate-400 mb-6">Enter what's in the fridge to get instant recipes and a grocery list.</p>
+    
+    <label class="block text-sm font-medium mb-1">Ingredients on hand</label>
+    <textarea id="ingredients" rows="3" placeholder="e.g., chicken breast, rice, broccoli, cheddar cheese..." class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 mb-4 focus:outline-none focus:border-emerald-400"></textarea>
+    
+    <label class="block text-sm font-medium mb-1">Dietary notes (optional)</label>
+    <input id="diet" type="text" placeholder="e.g., high protein, vegetarian, under 30 mins" class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 mb-6 focus:outline-none focus:border-emerald-400" />
+    
+    <button onclick="generate()" id="btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-lg transition">Generate Dinner Ideas</button>
+    
+    <div id="output" class="mt-6 whitespace-pre-wrap text-slate-200 leading-relaxed hidden bg-slate-900 p-5 rounded-xl border border-slate-700"></div>
+  </div>
+
+  <script>
+    async function generate() {
+      const btn = document.getElementById('btn');
+      const output = document.getElementById('output');
+      const ingredients = document.getElementById('ingredients').value;
+      const diet = document.getElementById('diet').value;
+      if (!ingredients) return alert('Type some ingredients first!');
+
+      btn.innerText = 'Thinking...';
+      btn.disabled = true;
+      output.classList.remove('hidden');
+      output.innerText = 'Chef AI is planning your meals...';
+
+      const res = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients, diet })
+      });
+      const data = await res.json();
+      output.innerText = data.result || data.error;
+      btn.innerText = 'Generate Dinner Ideas';
+      btn.disabled = false;
+    }
+  </script>
+</body>
+</html>
