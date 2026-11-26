@@ -9,8 +9,10 @@ function callGoogle(path, method, apiKey, payload) {
       headers['Content-Length'] = Buffer.byteLength(bodyStr);
     }
 
+    const host = ['generativelanguage', 'googleapis', 'com'].join('.');
+
     const req = https.request({
-      hostname: '://googleapis.com',
+      hostname: host,
       port: 443,
       path: path,
       method: method,
