@@ -60,7 +60,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash-lite:generateContent', 'POST', apiKey, payload);
+    const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, payload);
     const data = JSON.parse(genRes.text);
 
     if (genRes.status !== 200 || data.error) {
