@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const apiKey = (process.env.GEMINI_API_KEY || '').replace(/\s+/g, '');
   if (!apiKey) {
     return res.status(500).json({ error: 'Missing GEMINI_API_KEY in Vercel Environment Variables.' });
   }
@@ -10,9 +10,10 @@ export default async function handler(req, res) {
   const prompt = `I have these ingredients: ${ingredients}. Dietary preference: ${diet || 'None'}. Give me 3 realistic dinner recipes I can make, and list any extra groceries I need to buy. Format cleanly with headings and bullet points.`;
 
   try {
-    // 1. Automatically find an active Gemini model on your key
-    let modelPath = 'models/gemini-3.8-flash';
-    const listRes = await fetch(`https://googleapis.com{apiKey}`);
+    let modelPath = 'models/gemini-2.5-flash';
+    const listRes = await fetch('https://googleapis.com', {
+      headers: { 'x-goog-api-key': apiKey }
+    });
     if (listRes.ok) {
       const listData = await listRes.json();
       const validModels = (listData.models || []).filter(m =>
@@ -24,14 +25,16 @@ export default async function handler(req, res) {
         !m.name.includes('live')
       );
       if (validModels.length > 0) {
-        modelPath = validModels[0].name;
+        modelPath = validModels.at(0).name;
       }
     }
 
-    // 2. Generate the dinner recipes using that exact model
-    const response = await fetch(`https://googleapis.com{modelPath}:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://googleapis.com{modelPath}:generateContent`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
       })
@@ -49,6 +52,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ result: reply });
   } catch (err) {
-    res.status(500).json({ error: 'Fetch failed: ' + err.message });
+    const causeMsg = err.cause ? ` (${err.cause.code || err.cause.message})` : '';
+    res.status(500).json({ error: 'Fetch failed: ' + err.message + causeMsg });
   }
 }
