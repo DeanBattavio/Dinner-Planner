@@ -11,9 +11,17 @@ export default async function handler(req, res) {
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    
+    if (data.error) {
+      return res.status(500).json({ error: "API Error: " + data.error.message });
+    }
+
+    const firstCandidate = data.candidates && data.candidates.at(0);
+    const firstPart = firstCandidate && firstCandidate.content && firstCandidate.content.parts && firstCandidate.content.parts.at(0);
+    const reply = (firstPart && firstPart.text) || "No response generated.";
+    
     res.status(200).json({ result: reply });
   } catch (err) {
-    res.status(500).json({ error: "Failed to generate recipes." });
+    res.status(500).json({ error: "Server Error: " + err.message });
   }
 }
