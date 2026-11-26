@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     try {
       data = JSON.parse(rawText);
     } catch (e) {
-      return res.status(500).json({ error: 'Unexpected response from Google (Status ' + response.status + ')' });
+      return res.status(500).json({ error: 'Google returned non-JSON (Status ' + response.status + ')' });
     }
 
     if (!response.ok || data.error) {
@@ -39,7 +39,6 @@ export default async function handler(req, res) {
 
     res.status(200).json({ result: reply });
   } catch (err) {
-    const details = err.cause ? err.cause.message : err.message;
-    res.status(500).json({ error: 'Network Error: ' + details });
+    res.status(500).json({ error: 'Fetch failed: ' + err.message });
   }
 }
