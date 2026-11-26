@@ -46,11 +46,14 @@ export default async function handler(req, res) {
   const ingredients = body.ingredients || '';
   const diet = body.diet || 'None';
 
-  const prompt = 'I have these ingredients: ' + ingredients + '. Dietary preference: ' + diet + '. Give me 3 realistic dinner recipes I can make using these ingredients, and list any extra groceries I need to buy. Format cleanly with clear titles and bullet points.';
+  const prompt = 'Ingredients: ' + ingredients + '. Diet: ' + diet + '. Give 3 quick, realistic dinner recipes using these ingredients (with brief steps) and a short bulleted grocery list of extra items to buy.';
 
   try {
     const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, {
-      contents: [{ parts: [{ text: prompt }] }]
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
 
     const data = JSON.parse(genRes.text);
