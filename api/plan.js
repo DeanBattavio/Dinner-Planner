@@ -29,7 +29,7 @@ function callGoogle(path, method, apiKey, payload) {
 
     req.on('timeout', function() {
       req.destroy();
-      reject(new Error('Chef AI is super busy right now—tap Generate again in 5 seconds!'));
+      reject(new Error('Chef Dean is super busy right now—tap Generate again in 5 seconds!'));
     });
 
     req.on('error', function(err) { reject(err); });
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
   const ingredients = body.ingredients || '';
   const diet = body.diet || 'None';
 
-  const prompt = 'Ingredients: ' + ingredients + '. Diet: ' + diet + '. Give 3 quick, realistic dinner recipes using these ingredients (with brief steps) and a short bulleted grocery list of extra items to buy.';
+  const prompt = 'You are Chef Dean. Ingredients: ' + ingredients + '. Diet: ' + diet + '. Give 3 quick, realistic dinner recipes using these ingredients (with brief steps) and a short bulleted grocery list of extra items to buy.';
 
   const payload = {
     contents: [{ parts: [{ text: prompt }] }],
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
 
     if (genRes.status !== 200 || data.error) {
       if (genRes.status === 503 || genRes.status === 429) {
-        return res.status(503).json({ error: 'Chef AI is super busy right now—tap Generate again in 5 seconds!' });
+        return res.status(503).json({ error: 'Chef Dean is super busy right now—tap Generate again in 5 seconds!' });
       }
       const errMsg = (data.error && data.error.message) ? data.error.message : ('Status ' + genRes.status);
       return res.status(500).json({ error: 'Something went wrong: ' + errMsg });
