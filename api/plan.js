@@ -29,7 +29,7 @@ function callGoogle(path, method, apiKey, payload) {
 
     req.on('timeout', function() {
       req.destroy();
-      reject(new Error('Google AI is busy right now—please click Generate again!'));
+      reject(new Error('Chef AI is super busy right now—tap Generate again in 5 seconds!'));
     });
 
     req.on('error', function(err) { reject(err); });
@@ -60,12 +60,21 @@ export default async function handler(req, res) {
   };
 
   try {
-    const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, payload);
+    let genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, payload);
+
+    if (genRes.status === 503 || genRes.status === 429) {
+      await new Promise(function(r) { setTimeout(r, 1500); });
+      genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, payload);
+    }
+
     const data = JSON.parse(genRes.text);
 
     if (genRes.status !== 200 || data.error) {
+      if (genRes.status === 503 || genRes.status === 429) {
+        return res.status(503).json({ error: 'Chef AI is super busy right now—tap Generate again in 5 seconds!' });
+      }
       const errMsg = (data.error && data.error.message) ? data.error.message : ('Status ' + genRes.status);
-      return res.status(500).json({ error: 'Google API Error: ' + errMsg });
+      return res.status(500).json({ error: 'Something went wrong: ' + errMsg });
     }
 
     const firstCandidate = data.candidates && data.candidates.at(0);
