@@ -49,25 +49,7 @@ export default async function handler(req, res) {
   const prompt = 'I have these ingredients: ' + ingredients + '. Dietary preference: ' + diet + '. Give me 3 realistic dinner recipes I can make using these ingredients, and list any extra groceries I need to buy. Format cleanly with clear titles and bullet points.';
 
   try {
-    let modelPath = 'models/gemini-2.5-flash';
-    const listRes = await callGoogle('/v1beta/models', 'GET', apiKey, null);
-    if (listRes.status === 200) {
-      const listData = JSON.parse(listRes.text);
-      const models = listData.models || [];
-      const validModels = models.filter(function(m) {
-        return m.supportedGenerationMethods &&
-          m.supportedGenerationMethods.indexOf('generateContent') !== -1 &&
-          m.name.indexOf('flash') !== -1 &&
-          m.name.indexOf('tts') === -1 &&
-          m.name.indexOf('image') === -1 &&
-          m.name.indexOf('live') === -1;
-      });
-      if (validModels.length > 0) {
-        modelPath = validModels.at(0).name;
-      }
-    }
-
-    const genRes = await callGoogle('/v1beta/' + modelPath + ':generateContent', 'POST', apiKey, {
+    const genRes = await callGoogle('/v1beta/models/gemini-3.8-flash:generateContent', 'POST', apiKey, {
       contents: [{ parts: [{ text: prompt }] }]
     });
 
